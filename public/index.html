@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PM2 Manager ⚡</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+</head>
+<body>
+
+  <!-- LOGIN PAGE -->
+  <div id="loginPage" class="login-page">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="logo-icon">⚡</div>
+        <h1>PM2 Manager</h1>
+        <p>Silakan login untuk melanjutkan</p>
+      </div>
+      <form id="loginForm">
+        <div class="form-group">
+          <label><i class="fas fa-user"></i> Username</label>
+          <input type="text" id="loginUsername" placeholder="admin" autocomplete="username" required />
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-lock"></i> Password</label>
+          <div class="password-wrap">
+            <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required />
+            <button type="button" id="togglePass" class="toggle-pass"><i class="fas fa-eye"></i></button>
+          </div>
+        </div>
+        <div id="loginError" class="alert alert-danger" style="display:none;"></div>
+        <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+          <i class="fas fa-sign-in-alt"></i> Login
+        </button>
+      </form>
+      <div class="login-footer">PM2 Web Manager v1.0.0 &copy; 2026 ZERIF ID</div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="mainApp" class="app" style="display:none;">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <span class="logo-icon">⚡</span>
+          <span class="logo-text">PM2 Manager</span>
+        </div>
+        <button class="sidebar-toggle-btn" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-page="dashboard">
+          <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-page="processes">
+          <i class="fas fa-microchip"></i><span>Processes</span>
+          <span class="badge" id="processCount">0</span>
+        </a>
+        <a href="#" class="nav-item" data-page="logs">
+          <i class="fas fa-file-lines"></i><span>Logs</span>
+        </a>
+        <a href="#" class="nav-item" data-page="deploy">
+          <i class="fas fa-rocket"></i><span>Deploy</span>
+        </a>
+        <a href="#" class="nav-item" data-page="terminal">
+          <i class="fas fa-terminal"></i><span>Terminal</span>
+        </a>
+        <a href="#" class="nav-item" data-page="settings">
+          <i class="fas fa-cog"></i><span>Settings</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="ws-status" id="wsStatus">
+          <span class="ws-dot"></span><span class="ws-label">Connecting...</span>
+        </div>
+        <button class="btn btn-sm btn-danger" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i> <span class="logout-text">Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+
+      <!-- Top Bar -->
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+          <h2 class="page-title" id="pageTitle">Dashboard</h2>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-time" id="topbarTime"></div>
+          <div class="user-badge">
+            <i class="fas fa-user-circle"></i>
+            <span id="userLabel">admin</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== DASHBOARD =================== -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon cpu"><i class="fas fa-microchip"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">CPU Usage</div>
+              <div class="stat-value" id="sysCpu">0%</div>
+              <div class="stat-bar"><div class="stat-bar-fill cpu-fill" id="sysCpuBar"></div></div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon mem"><i class="fas fa-memory"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Memory</div>
+              <div class="stat-value" id="sysMem">0%</div>
+              <div class="stat-bar"><div class="stat-bar-fill mem-fill" id="sysMemBar"></div></div>
+              <div class="stat-sub" id="sysMemDetail">-</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon online"><i class="fas fa-circle-check"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Online</div>
+              <div class="stat-value" id="countOnline">0</div>
+              <div class="stat-sub">processes</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stopped"><i class="fas fa-circle-xmark"></i></div>
+            <div class="stat-info">
+              <div class="stat-label">Stopped</div>
+              <div class="stat-value" id="countStopped">0</div>
+              <div class="stat-sub">processes</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fas fa-server"></i> System Info</h3>
+            <div class="realtime-badge"><span class="pulse"></span> Realtime</div>
+          </div>
+          <div class="sysinfo-grid">
+            <div class="sysinfo-item"><span class="si-label">Hostname</span><span class="si-value" id="siHostname">-</span></div>
+            <div class="sysinfo-item"><span class="si-label">Platform</span><span class="si-value" id="siPlatform">-</span></div>
+            <div class="sysinfo-item"><span class="si-label">CPU Model</span><span class="si-value" id="siCpuModel">-</span></div>
+            <div class="sysinfo-item"><span class="si-label">CPU Cores</span><span class="si-value" id="siCpuCount">-</span></div>
+            <div class="sysinfo-item"><span class="si-label">Total RAM</span><span class="si-value" id="siTotalMem">-</span></div>
+            <div class="sysinfo-item"><span class="si-label">Uptime</span><span class="si-value" id="siUptime">-</span></div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fas fa-list"></i> Running Processes</h3>
+            <button class="btn btn-sm btn-primary" id="dashStartBtn"><i class="fas fa-plus"></i> New Process</button>
+          </div>
+          <div id="dashProcessList" class="process-table-wrap">
+            <div class="empty-state"><i class="fas fa-ghost"></i><p>Belum ada proses</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== PROCESSES =================== -->
+      <div class="page" id="page-processes">
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fas fa-microchip"></i> All Processes</h3>
+            <div class="header-actions">
+              <button class="btn btn-sm btn-success" id="startProcessBtn"><i class="fas fa-plus"></i> Start New</button>
+              <button class="btn btn-sm btn-warning" id="saveBtn"><i class="fas fa-save"></i> Save List</button>
+              <button class="btn btn-sm btn-secondary" id="refreshBtn"><i class="fas fa-sync"></i> Refresh</button>
+            </div>
+          </div>
+          <div id="fullProcessList" class="process-table-wrap">
+            <div class="empty-state"><i class="fas fa-ghost"></i><p>Belum ada proses</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== LOGS =================== -->
+      <div class="page" id="page-logs">
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fas fa-file-lines"></i> Logs Realtime</h3>
+            <div class="header-actions">
+              <select id="logProcessSelect" class="form-select">
+                <option value="">-- Pilih Process --</option>
+              </select>
+              <button class="btn btn-sm btn-danger" id="clearLogBtn"><i class="fas fa-trash"></i> Clear</button>
+              <button class="btn btn-sm btn-warning" id="flushLogBtn"><i class="fas fa-broom"></i> Flush</button>
+            </div>
+          </div>
+          <div class="log-toolbar">
+            <label class="toggle-label"><input type="checkbox" id="autoScrollLog" checked> Auto-scroll</label>
+            <label class="toggle-label"><input type="checkbox" id="showErrLog" checked> Show Errors</label>
+            <label class="toggle-label"><input type="checkbox" id="showOutLog" checked> Show Output</label>
+          </div>
+          <div class="log-terminal" id="logTerminal">
+            <div class="log-placeholder"><i class="fas fa-terminal"></i> Pilih process di atas untuk lihat logs...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== DEPLOY =================== -->
+      <div class="page" id="page-deploy">
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fas fa-rocket"></i> Deploy / Start Process</h3>
+          </div>
+          <form id="deployForm" class="deploy-form">
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>App Name</label>
+                <input type="text" id="depName" placeholder="my-app" />
+              </div>
+              <div class="form-group">
+                <label>Runtime</label>
+                <select id="depRuntime">
+                  <option value="node">🟢 Node.js</option>
+                  <option value="python">🐍 Python</option>
+                  <option value="custom">⚙️ Custom Interpreter</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Node.js -->
+            <div id="optNode">
+              <div class="form-group">
+                <label>Script / Entry File <span class="required">*</span></label>
+                <input type="text" id="depScript" placeholder="app.js" />
+              </div>
+            </div>
+
+            <!-- Python -->
+            <div id="optPython" style="display:none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Script Python <span class="required">*</span></label>
+                  <input type="text" id="depPyScript" placeholder="main.py" />
+                </div>
+                <div class="form-group">
+                  <label>Python Path <small style="color:var(--text3);">(default: python)</small></label>
+                  <input type="text" id="depPyPath" placeholder="python atau C:\Python311\python.exe" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Custom -->
+            <div id="optCustom" style="display:none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Interpreter <span class="required">*</span></label>
+                  <input type="text" id="depCustomInterp" placeholder="ruby, php, java -jar, dll" />
+                </div>
+                <div class="form-group">
+                  <label>Script / File <span class="required">*</span></label>
+                  <input type="text" id="depCustomScript" placeholder="app.rb, server.php, dll" />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Working Directory</label>
+                <input type="text" id="depCwd" placeholder="E:\my-project" />
+              </div>
+              <div class="form-group">
+                <label>Instances</label>
+                <input type="number" id="depInstances" value="1" min="1" max="32" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Max Memory Restart</label>
+                <input type="text" id="depMaxMem" value="500M" placeholder="500M" />
+              </div>
+              <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:4px;">
+                <label class="toggle-label">
+                  <input type="checkbox" id="depWatch"> Enable Watch
+                </label>
+              </div>
+            </div>
+
+            <div id="deployResult" class="alert" style="display:none;"></div>
+            <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-rocket"></i> Deploy Process</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- =================== TERMINAL =================== -->
+      <div class="page" id="page-terminal">
+        <div class="section-card" style="display:flex;flex-direction:column;height:calc(100vh - 130px);">
+          <div class="section-header">
+            <h3><i class="fas fa-terminal"></i> Terminal</h3>
+            <div class="header-actions">
+              <input type="text" id="termCwdInput" placeholder="Working dir (kosong = default)" class="form-select" style="min-width:220px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;" />
+              <button class="btn btn-sm btn-secondary" id="termConnectBtn"><i class="fas fa-plug"></i> Connect</button>
+              <button class="btn btn-sm btn-danger" id="termKillBtn"><i class="fas fa-stop"></i> Kill</button>
+            </div>
+          </div>
+          <div id="xtermContainer" style="flex:1;padding:8px;background:#0a0d14;overflow:hidden;"></div>
+        </div>
+      </div>
+
+      <!-- =================== SETTINGS =================== -->
+      <div class="page" id="page-settings">
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fas fa-key"></i> Ganti Password</h3>
+          </div>
+          <form id="changePassForm" class="deploy-form" style="max-width:420px;">
+            <div class="form-group">
+              <label>Password Lama</label>
+              <input type="password" id="oldPass" required />
+            </div>
+            <div class="form-group">
+              <label>Password Baru</label>
+              <input type="password" id="newPass" required minlength="6" />
+            </div>
+            <div class="form-group">
+              <label>Konfirmasi Password Baru</label>
+              <input type="password" id="confirmPass" required minlength="6" />
+            </div>
+            <div id="passResult" class="alert" style="display:none;"></div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Password</button>
+          </form>
+        </div>
+
+        <div class="section-card" style="margin-top:20px;">
+          <div class="section-header">
+            <h3><i class="fas fa-info-circle"></i> About</h3>
+          </div>
+          <div class="about-info">
+            <p>⚡ <strong>PM2 Web Manager</strong> v1.0.0</p>
+            <p>Dibuat oleh <strong>ZERIF ID</strong></p>
+            <p style="color:var(--text3);font-size:0.82rem;">Sistem ini hanya digunakan oleh orang-orang tertentu yang berwenang.</p>
+            <hr style="border:none;border-top:1px solid var(--border);margin:12px 0;">
+            <p style="color:var(--text3);font-size:0.78rem;">&copy; 2026 ZERIF ID. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modalOverlay" style="display:none;">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h4 id="modalTitle">Modal</h4>
+        <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
